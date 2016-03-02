@@ -92,28 +92,6 @@ pub fn create_test_block(header: &Header) -> Bytes {
 	rlp.out()
 }
 
-fn create_unverifiable_block_header(order: u32, parent_hash: H256) -> Header {
-	let mut header = Header::new();
-	header.gas_limit = x!(0);
-	header.difficulty = x!(order * 100);
-	header.timestamp = (order * 10) as u64;
-	header.number = order as u64;
-	header.parent_hash = parent_hash;
-	header.state_root = H256::zero();
-
-	header
-}
-
-fn extra_data(order: u32) -> Bytes {
-	let base = (order & 0x000000ff) as u8;
-	let generated: Vec<u8> = vec![base + 1, base + 2, base + 3];
-	generated
-}
-
-fn create_unverifiable_block(order: u32, parent_hash: H256) -> Bytes {
-	create_test_block(&create_unverifiable_block_header(order, parent_hash))
-}
-
 pub fn create_test_block_with_data(header: &Header, transactions: &[&SignedTransaction], uncles: &[Header]) -> Bytes {
 	let mut rlp = RlpStream::new_list(3);
 	rlp.append(header);

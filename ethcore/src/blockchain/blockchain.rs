@@ -396,9 +396,9 @@ impl BlockChain {
 	/// Inserts the block into backing cache database.
 	/// Expects the block to be valid and already verified.
 	/// If the block is already known, does nothing.
-	pub fn insert_block(&self, bytes: &[u8], receipts: Vec<Receipt>) {
+	pub fn insert_block(&self, block_bytes: &[u8], receipts: Vec<Receipt>) {
 		// create views onto rlp
-		let block = BlockView::new(bytes);
+		let block = BlockView::new(block_bytes);
 		let header = block.header_view();
 		let hash = header.sha3();
 
@@ -407,18 +407,23 @@ impl BlockChain {
 		}
 
 		// store block in db
-		self.blocks_db.put(&hash, &bytes).unwrap();
+		self.blocks_db.put(&hash, block_bytes).unwrap();
 
-		let info = self.block_info(bytes);
+		//update extras
+		self.apply_update(self.prepare_extras_update(block_bytes, receipts));
+	}
 
-		self.apply_update(ExtrasUpdate {
-			block_hashes: self.prepare_block_hashes_update(bytes, &info),
-			block_details: self.prepare_block_details_update(bytes, &info),
+	/// Prepares extras update object.
+	fn prepare_extras_update(&self, block: &[u8], receipts: Vec<Receipt>) -> ExtrasUpdate {
+		let info = self.block_info(block);
+		ExtrasUpdate {
+			block_hashes: self.prepare_block_hashes_update(block, &info),
+			block_details: self.prepare_block_details_update(block, &info),
 			block_receipts: self.prepare_block_receipts_update(receipts, &info),
-			transactions_addresses: self.prepare_transaction_addresses_update(bytes, &info),
-			blocks_blooms: self.prepare_block_blooms_update(bytes, &info),
+			transactions_addresses: self.prepare_transaction_addresses_update(block, &info),
+			blocks_blooms: self.prepare_block_blooms_update(block, &info),
 			info: info
-		});
+		}
 	}
 
 	/// Applies extras update.
