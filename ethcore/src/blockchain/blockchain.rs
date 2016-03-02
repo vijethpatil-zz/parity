@@ -775,8 +775,8 @@ mod tests {
 	use util::sha3::Hashable;
 	use blockchain::{BlockProvider, BlockChain, BlockChainConfig};
 	use tests::helpers::*;
+	use tests::generator::{ChainGenerator, ChainIterator, BlockFinalizer};
 	use devtools::*;
-	use blockchain::generator::{ChainGenerator, ChainIterator, BlockFinalizer};
 	use views::BlockView;
 
 	#[test]
@@ -948,13 +948,6 @@ mod tests {
 			bc.collect_garbage();
 		}
 		assert!(bc.cache_size().blocks < 1024 * 1024);
-	}
-
-	#[test]
-	fn can_contain_arbitrary_block_sequence_with_extra() {
-		let bc_result = generate_dummy_blockchain_with_extra(25);
-		let bc = bc_result.reference();
-		assert_eq!(bc.best_block_number(), 24);
 	}
 
 	#[test]

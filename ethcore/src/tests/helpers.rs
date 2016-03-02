@@ -23,6 +23,7 @@ use evm::{Schedule, Factory};
 use engine::*;
 use ethereum;
 use devtools::*;
+use super::generator::{BlockFinalizer, ChainIterator, ChainGenerator};
 
 #[cfg(feature = "json-tests")]
 pub enum ChainEra {
@@ -103,17 +104,10 @@ fn create_unverifiable_block_header(order: u32, parent_hash: H256) -> Header {
 	header
 }
 
-fn create_unverifiable_block_with_extra(order: u32, parent_hash: H256, extra: Option<Bytes>) -> Bytes {
-	let mut header = create_unverifiable_block_header(order, parent_hash);
-	header.extra_data = match extra {
-		Some(extra_data) => extra_data,
-		None => {
-			let base = (order & 0x000000ff) as u8;
-			let generated: Vec<u8> = vec![base + 1, base + 2, base + 3];
-			generated
-		}
-	};
-	create_test_block(&header)
+fn extra_data(order: u32) -> Bytes {
+	let base = (order & 0x000000ff) as u8;
+	let generated: Vec<u8> = vec![base + 1, base + 2, base + 3];
+	generated
 }
 
 fn create_unverifiable_block(order: u32, parent_hash: H256) -> Bytes {
@@ -188,23 +182,15 @@ pub fn get_test_client_with_blocks(blocks: Vec<Bytes>) -> GuardedTempResult<Arc<
 }
 
 pub fn generate_dummy_blockchain(block_number: u32) -> GuardedTempResult<BlockChain> {
-	let temp = RandomTempPath::new();
-	let bc = BlockChain::new(BlockChainConfig::default(), &create_unverifiable_block(0, H256::zero()), temp.as_path());
-	for block_order in 1..block_number {
-		bc.insert_block(&create_unverifiable_block(block_order, bc.best_block_hash()), vec![]);
-	}
+	let mut generator = ChainGenerator::default();
+	let mut finalizer = BlockFinalizer::default();
+	let genesis = generator.generate(&mut finalizer).unwrap();
 
-	GuardedTempResult::<BlockChain> {
-		_temp: temp,
-		result: Some(bc)
-	}
-}
-
-pub fn generate_dummy_blockchain_with_extra(block_number: u32) -> GuardedTempResult<BlockChain> {
 	let temp = RandomTempPath::new();
-	let bc = BlockChain::new(BlockChainConfig::default(), &create_unverifiable_block(0, H256::zero()), temp.as_path());
-	for block_order in 1..block_number {
-		bc.insert_block(&create_unverifiable_block_with_extra(block_order, bc.best_block_hash(), None), vec![]);
+	let bc = BlockChain::new(BlockChainConfig::default(), &genesis, temp.as_path());
+
+	for block in generator.take(block_number as usize - 1).complete(&mut finalizer) {
+		bc.insert_block(&block, vec![]);
 	}
 
 	GuardedTempResult::<BlockChain> {
@@ -214,13 +200,7 @@ pub fn generate_dummy_blockchain_with_extra(block_number: u32) -> GuardedTempRes
 }
 
 pub fn generate_dummy_empty_blockchain() -> GuardedTempResult<BlockChain> {
-	let temp = RandomTempPath::new();
-	let bc = BlockChain::new(BlockChainConfig::default(), &create_unverifiable_block(0, H256::zero()), temp.as_path());
-
-	GuardedTempResult::<BlockChain> {
-		_temp: temp,
-		result: Some(bc)
-	}
+	generate_dummy_blockchain(1)
 }
 
 pub fn get_temp_journal_db() -> GuardedTempResult<JournalDB> {

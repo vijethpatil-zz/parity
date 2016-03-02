@@ -17,6 +17,7 @@
 mod bloom;
 mod block;
 mod complete;
+mod extra_data;
 mod fork;
 pub mod generator;
 

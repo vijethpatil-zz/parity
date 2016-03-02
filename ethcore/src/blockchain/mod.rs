@@ -23,8 +23,6 @@ mod bloom_indexer;
 mod cache;
 mod tree_route;
 mod update;
-#[cfg(test)]
-mod generator;
 
 pub use self::blockchain::{BlockProvider, BlockChain, BlockChainConfig};
 pub use self::cache::CacheSize;

@@ -22,6 +22,7 @@ use super::fork::Fork;
 use super::bloom::Bloom;
 use super::complete::{BlockFinalizer, CompleteBlock, Complete};
 use super::block::Block;
+use super::extra_data::ExtraData;
 
 /// Chain iterator interface.
 pub trait ChainIterator: Iterator + Sized {
@@ -30,6 +31,8 @@ pub trait ChainIterator: Iterator + Sized {
 	fn fork(&self, fork_number: usize) -> Fork<Self> where Self: Clone;
 	/// Should be called to make every consecutive block have given bloom.
 	fn with_bloom<'a>(&'a mut self, bloom: H2048) -> Bloom<'a, Self>;
+	/// Should be called to make every consecutive block have given exta data.
+	fn with_extra_data<'a>(&'a mut self, extra_data: Bytes) -> ExtraData<'a, Self>;
 	/// Should be called to complete block. Without complete, block may have incorrect hash.
 	fn complete<'a>(&'a mut self, finalizer: &'a mut BlockFinalizer) -> Complete<'a, Self>;
 	/// Completes and generates block.
@@ -48,6 +51,13 @@ impl<I> ChainIterator for I where I: Iterator + Sized {
 		Bloom {
 			iter: self,
 			bloom: bloom
+		}
+	}
+
+	fn with_extra_data<'a>(&'a mut self, extra_data: Bytes) -> ExtraData<'a, Self> {
+		ExtraData {
+			iter: self,
+			extra_data: extra_data
 		}
 	}
 
@@ -104,7 +114,7 @@ mod tests {
 	use util::hash::{H256, H2048};
 	use util::sha3::Hashable;
 	use views::BlockView;
-	use blockchain::generator::{ChainIterator, ChainGenerator, BlockFinalizer};
+	use super::super::{ChainIterator, ChainGenerator, BlockFinalizer};
 
 	#[test]
 	fn canon_chain_generator() {

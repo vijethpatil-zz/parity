@@ -20,9 +20,9 @@ use util::U256;
 use util::bytes::Bytes;
 use header::Header;
 use transaction::SignedTransaction;
-
 use super::fork::Forkable;
 use super::bloom::WithBloom;
+use super::extra_data::WithExtraData;
 use super::complete::CompleteBlock;
 
 /// Helper structure, used for encoding blocks.
@@ -56,9 +56,17 @@ impl WithBloom for Block {
 	}
 }
 
+impl WithExtraData for Block {
+	fn with_extra_data(mut self, extra_data: Bytes) -> Self where Self: Sized {
+		self.header.extra_data = extra_data;
+		self
+	}
+}
+
 impl CompleteBlock for Block {
 	fn complete(mut self, parent_hash: H256) -> Bytes {
 		self.header.parent_hash = parent_hash;
 		encode(&self).to_vec()
 	}
 }
+

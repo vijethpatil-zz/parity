@@ -14,6 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-pub mod helpers;
-pub mod generator;
-mod client;
+use util::bytes::Bytes;
+
+pub trait WithExtraData {
+	fn with_extra_data(self, extra_data: Bytes) -> Self where Self: Sized;
+}
+
+pub struct ExtraData<'a, I> where I: 'a {
+	pub iter: &'a mut I,
+	pub extra_data: Bytes,
+}
+
+impl<'a, I> Iterator for ExtraData<'a, I> where I: Iterator, <I as Iterator>::Item: WithExtraData {
+	type Item = <I as Iterator>::Item;
+
+	#[inline]
+	fn next(&mut self) -> Option<Self::Item> {
+		self.iter.next().map(|item| item.with_extra_data(self.extra_data.clone()))
+	}
+}
