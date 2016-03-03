@@ -23,6 +23,7 @@ use transaction::SignedTransaction;
 use super::fork::Forkable;
 use super::bloom::WithBloom;
 use super::extra_data::WithExtraData;
+use super::transaction::WithTransaction;
 use super::complete::CompleteBlock;
 
 /// Helper structure, used for encoding blocks.
@@ -59,6 +60,13 @@ impl WithBloom for Block {
 impl WithExtraData for Block {
 	fn with_extra_data(mut self, extra_data: Bytes) -> Self where Self: Sized {
 		self.header.extra_data = extra_data;
+		self
+	}
+}
+
+impl WithTransaction for Block {
+	fn with_transaction(mut self, transaction: SignedTransaction) -> Self where Self: Sized {
+		self.transactions.push(transaction);
 		self
 	}
 }

@@ -18,11 +18,13 @@ use util::hash::H2048;
 use util::numbers::U256;
 use util::bytes::Bytes;
 use header::BlockNumber;
+use transaction::SignedTransaction;
 use super::fork::Fork;
 use super::bloom::Bloom;
 use super::complete::{BlockFinalizer, CompleteBlock, Complete};
 use super::block::Block;
 use super::extra_data::ExtraData;
+use super::transaction::Transaction;
 
 /// Chain iterator interface.
 pub trait ChainIterator: Iterator + Sized {
@@ -31,6 +33,8 @@ pub trait ChainIterator: Iterator + Sized {
 	fn fork(&self, fork_number: usize) -> Fork<Self> where Self: Clone;
 	/// Should be called to make every consecutive block have given bloom.
 	fn with_bloom<'a>(&'a mut self, bloom: H2048) -> Bloom<'a, Self>;
+	/// Should be called to make every consecutive block have given transaction.
+	fn with_transaction<'a>(&'a mut self, transaction: SignedTransaction) -> Transaction<'a, Self>;
 	/// Should be called to make every consecutive block have given exta data.
 	fn with_extra_data<'a>(&'a mut self, extra_data: Bytes) -> ExtraData<'a, Self>;
 	/// Should be called to complete block. Without complete, block may have incorrect hash.
@@ -58,6 +62,13 @@ impl<I> ChainIterator for I where I: Iterator + Sized {
 		ExtraData {
 			iter: self,
 			extra_data: extra_data
+		}
+	}
+
+	fn with_transaction<'a>(&'a mut self, transaction: SignedTransaction) -> Transaction<'a, Self> {
+		Transaction {
+			iter: self,
+			transaction: transaction
 		}
 	}
 

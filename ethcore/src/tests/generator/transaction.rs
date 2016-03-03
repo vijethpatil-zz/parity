@@ -14,13 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-mod bloom;
-mod block;
-mod complete;
-mod extra_data;
-mod fork;
-mod transaction;
-pub mod generator;
+use transaction::SignedTransaction;
 
-pub use self::complete::BlockFinalizer;
-pub use self::generator::{ChainIterator, ChainGenerator};
+pub trait WithTransaction {
+	fn with_transaction(self, tx: SignedTransaction) -> Self where Self: Sized;
+}
+
+pub struct Transaction<'a, I> where I: 'a {
+	pub iter: &'a mut I,
+	pub transaction: SignedTransaction,
+}
+
+impl<'a, I> Iterator for Transaction<'a, I> where I: Iterator, <I as Iterator>::Item: WithTransaction {
+	type Item = <I as Iterator>::Item;
+
+	#[inline]
+	fn next(&mut self) -> Option<Self::Item> {
+		self.iter.next().map(|item| item.with_transaction(self.transaction.clone()))
+	}
+}
