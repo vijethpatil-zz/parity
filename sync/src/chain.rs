@@ -1692,14 +1692,14 @@ mod tests {
 
 		// when
 		sync.chain_new_blocks(&mut io, &[], &[], &[], &good_blocks);
-		assert_eq!(sync.miner.status().transaction_queue_future, 0);
-		assert_eq!(sync.miner.status().transaction_queue_pending, 0);
+		assert_eq!(sync.miner.status().transactions_in_future_queue, 0);
+		assert_eq!(sync.miner.status().transactions_in_pending_queue, 0);
 		sync.chain_new_blocks(&mut io, &good_blocks, &[], &[], &retracted_blocks);
 
 		// then
 		let status = sync.miner.status();
-		assert_eq!(status.transaction_queue_pending, 0);
-		assert_eq!(status.transaction_queue_future, 0);
+		assert_eq!(status.transactions_in_future_queue, 0);
+		assert_eq!(status.transactions_in_pending_queue, 0);
 	}
 
 	#[test]
