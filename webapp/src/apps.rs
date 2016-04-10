@@ -18,6 +18,7 @@ use std::collections::HashMap;
 use page::{Page, PageHandler};
 
 extern crate parity_status;
+extern crate parity_oracle;
 extern crate parity_wallet;
 
 pub type Pages = HashMap<String, Box<Page>>;
@@ -28,6 +29,7 @@ pub fn main_page() -> Box<Page> {
 
 pub fn all_pages() -> Pages {
 	let mut pages = Pages::new();
+	pages.insert("oracle".to_owned(), Box::new(PageHandler { app: parity_oracle::App::default() }));
 	wallet_page(&mut pages);
 	pages
 }
